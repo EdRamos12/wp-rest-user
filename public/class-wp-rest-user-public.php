@@ -162,7 +162,7 @@ class Wp_Rest_User_Public {
 	 * username and password. It utilizes the WordPress `wp_signon` function for user
 	 * authentication and handles error cases accordingly.
 	 *
-	 * @author Your Name
+	 * @author Eduardo
 	 *
 	 * @since 1.4.0
 	 *
@@ -196,7 +196,8 @@ class Wp_Rest_User_Public {
 
 		$user = wp_signon( $credentials, true );
 		if ( is_wp_error( $user ) )
-			$error->add(500, __($user->get_error_message(), 'wp-rest-user'), array('status' => 500));
+			$error->add(403, __($user->get_error_message(), 'wp-rest-user'), array('status' => 403));
+			return $error;
 
 		$response['code'] = 200;
 		$response['message'] = __("User '" . $username . "' Login was Successful (hopefully)", "wp-rest-user");
