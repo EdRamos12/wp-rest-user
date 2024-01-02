@@ -188,6 +188,20 @@ class Wp_Rest_User_Public {
 			return $error;
 		}
 
+		if (!function_exists('wp_signon')) {
+			require_once(ABSPATH . WPINC . '/user.php');
+		}
+
+		if (is_email($username)) {
+			$user = get_user_by('email', $username);
+			if ($user) {
+				$username = $user->user_login;
+			} else {
+				$error->add(404, __("Invalid email address provided.", 'wp-rest-user'), array('status' => 404));
+				return $error;
+			}
+		}
+
 		$credentials = array(
 			'user_login'    => $username,
 			'user_password' => $password,
@@ -196,13 +210,13 @@ class Wp_Rest_User_Public {
 
 		$user = wp_signon( $credentials, true );
 		if ( is_wp_error( $user ) )
-			$error->add(403, __($user->get_error_message(), 'wp-rest-user'), array('status' => 403));
+			$error->add(401, __($user->get_error_message(), 'wp-rest-user'), array('status' => 401));
 			return $error;
 
 		$response['code'] = 200;
 		$response['message'] = __("User '" . $username . "' Login was Successful (hopefully)", "wp-rest-user");
 		
-		return array( "message" => "Successfully Logged In" );
+		return WP_REST_Response($response, 200);
 	}
 
 	/**
