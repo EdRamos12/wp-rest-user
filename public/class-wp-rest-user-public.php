@@ -69,6 +69,10 @@ class Wp_Rest_User_Public {
 			'methods' => 'POST',
 			'callback' => array($this, 'lost_password'),
 		));
+		register_rest_route('wp/v2', 'users/login', array(
+			'methods' => 'POST',
+			'callback' => array($this, 'login'),
+		));
 	}
 
 	/**
@@ -149,6 +153,55 @@ class Wp_Rest_User_Public {
 		}
 
 		return new WP_REST_Response($response, 200);
+	}
+
+	/**
+	 * Authenticate a user based on provided username and password.
+	 *
+	 * This function is responsible for authenticating a user by validating the provided
+	 * username and password. It utilizes the WordPress `wp_signon` function for user
+	 * authentication and handles error cases accordingly.
+	 *
+	 * @author Your Name
+	 *
+	 * @since 1.4.0
+	 *
+	 * @param WP_REST_Request|null $request The REST request object containing user credentials.
+	 *
+	 * @return array|WP_Error An associative array with authentication details on success,
+	 *                        or a WP_Error object with error information on failure.
+	 */
+
+	public function login($request = null) {
+		$response = array();
+		$parameters = $request->get_json_params();
+		$username = sanitize_text_field($parameters['username']);
+		$password = sanitize_text_field($parameters['password']);
+		$error = new WP_Error();
+
+		if (empty($username)) {
+			$error->add(400, __("Username field 'username' is required.", 'wp-rest-user'), array('status' => 400));
+			return $error;
+		}
+		if (empty($password)) {
+			$error->add(404, __("Password field 'password' is required.", 'wp-rest-user'), array('status' => 400));
+			return $error;
+		}
+
+		$credentials = array(
+			'user_login'    => $username,
+			'user_password' => $password,
+			'remember'      => true,
+		);
+
+		$user = wp_signon( $credentials, true );
+		if ( is_wp_error( $user ) )
+			$error->add(500, __($user->get_error_message(), 'wp-rest-user'), array('status' => 500));
+
+		$response['code'] = 200;
+		$response['message'] = __("User '" . $username . "' Login was Successful (hopefully)", "wp-rest-user");
+		
+		return array( "message" => "Successfully Logged In" );
 	}
 
 	/**
